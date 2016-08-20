@@ -61,7 +61,8 @@
   const ErrorBox = React.createClass({
     render(){
       return (
-        <img src="src/css/error.jpg" alt="..." className="center-block img-rounded img-responsive"/>
+        <img src="src/css/error.jpg"
+             className="center-block img-rounded img-responsive"/>
       );
     }
   });
@@ -103,7 +104,6 @@
               {
                 error && amount ? <ErrorBox/> : null
               }
-
             </div>
 
             <button type="button"
@@ -140,6 +140,56 @@
     }
   });
 
+  const HistoryItem = React.createClass({
+    getTrClass(type) {
+      return `text-center text-${type === ACTION.ADD ? 'success' : 'danger'}`;
+    },
+    getIconClass(type) {
+      return `glyphicon glyphicon-log-${type === ACTION.ADD ? 'in' : 'out'}`;
+    },
+    render() {
+      const { type, amount, date } = this.props;
+
+      return (
+        <tr className={this.getTrClass(type)}>
+          <td>
+            <i className={this.getIconClass(type)}></i>
+          </td>
+          <td><strong>{date}</strong></td>
+          <td className="text-right"><strong>{amount} $</strong></td>
+        </tr>
+      );
+    }
+  });
+
+  const HistoryList = React.createClass({
+    render() {
+      const historyItems = this.props.data.map((item) => {
+        return (
+          <HistoryItem type={item.type}
+                       key={item.date}
+                       amount={item.amount}
+                       date={item.date} />
+        );
+      });
+
+      return (
+        <section className="section">
+          <div className="container">
+            <table className="table table-hover table-responsive">
+              <tbody>
+              <tr className="highlight">
+                <th className="text-center">Action:</th>
+                <th className="text-center">Date:</th>
+                <th className="text-right">Amount:</th></tr>
+              {historyItems}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      );
+    }
+  });
 
 
 
@@ -156,7 +206,7 @@
         date: new Date().toString(),
         amount: parsedAmount
       };
-      const data = this.state.data.concat([item]);
+      const data = [item].concat(this.state.data);
 
       console.log('data', data)
 
@@ -175,6 +225,7 @@
           <WalletMenu onReset={this.resetHistory}/>
           <AmountBox total={this.state.totalAmount}
                      onClickButton={this.handleAction}/>
+          <HistoryList data={this.state.data} />
         </div>
       );
     }
