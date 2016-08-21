@@ -1,7 +1,8 @@
 {
   const ACTION = {
     ADD: 'add',
-    REMOVE: 'remove'
+    REMOVE: 'remove',
+    FORMAT: 'MMMM Do YYYY, h:mm:ss a'
   };
 
   const WalletMenu = React.createClass({
@@ -60,8 +61,10 @@
 
   const ErrorBox = React.createClass({
     render(){
+      const url = this.props.url;
+
       return (
-        <img src="src/css/error.jpg"
+        <img src={url}
              className="center-block img-rounded img-responsive"/>
       );
     }
@@ -69,17 +72,16 @@
 
   const AmountForm = React.createClass({
     getInitialState() {
-      return { amount: '', error: false }
+      return { amount: '', error: false, empty: this.props.empty }
     },
     handleAmountChange(e) {
       const reg = /^\d+$/;
       const amount = e.target.value;
 
-      this.setState({ amount, error: !reg.test(amount) });
+      this.setState({ amount, error: !reg.test(amount), empty: false });
     },
     handleAction(type) {
-      const amount = this.state.amount.trim();
-      const error = this.state.error;
+      const { amount, error } = this.state;
 
       if(!amount || error) return;
 
@@ -88,8 +90,7 @@
       this.setState({author: ''});
     },
     render() {
-      const amount = this.state.amount.trim();
-      const error = this.state.error;
+      const { amount, error, empty } = this.state;
 
       return (
         <div className="btns col-md-offset-3 col-md-6">
@@ -102,7 +103,10 @@
                 value={amount}
                 onChange={this.handleAmountChange}/>
               {
-                error && amount ? <ErrorBox/> : null
+                error && amount ? <ErrorBox url="src/css/error.jpg"/> : null
+              }
+              {
+                empty && !error && amount ? <ErrorBox url="src/css/empty.jpg"/> : null
               }
             </div>
 
@@ -126,6 +130,7 @@
 
   const AmountBox = React.createClass({
     render() {
+      const empty = this.props.empty;
       const total = this.props.total;
       const onClickButton = this.props.onClickButton;
 
@@ -133,7 +138,7 @@
         <section className="promo section offset-header">
           <div className="container text-center">
             <AmountTotal total={total} />
-            <AmountForm onClickButton={onClickButton}/>
+            <AmountForm onClickButton={onClickButton} empty={empty}/>
           </div>
         </section>
       );
@@ -148,7 +153,8 @@
       return `glyphicon glyphicon-log-${type === ACTION.ADD ? 'in' : 'out'}`;
     },
     render() {
-      const { type, amount, date } = this.props;
+      const { type, amount } = this.props;
+      const date = moment(this.props.date).format(ACTION.FORMAT);
 
       return (
         <tr className={this.getTrClass(type)}>
@@ -164,10 +170,10 @@
 
   const HistoryList = React.createClass({
     render() {
-      const historyItems = this.props.data.map((item) => {
+      const historyItems = this.props.data.map((item, index) => {
         return (
           <HistoryItem type={item.type}
-                       key={item.date}
+                       key={index}
                        amount={item.amount}
                        date={item.date} />
         );
@@ -196,27 +202,36 @@
   const WalletBox = React.createClass({
     resetHistory() {
       console.log('reset')
-      this.setState({ data: [], totalAmount: 0 });
+      this.setState({ data: [], totalAmount: 0, empty: false });
+      localStorage.removeItem('walletData');
     },
     handleAction(amount, type) {
       const parsedAmount = parseInt(amount);
       const total = this.state.totalAmount + (type === ACTION.ADD ? parsedAmount : parsedAmount * (-1));
+
+      if(total < 0) return this.setState({ empty: true });
+
       const item = {
         type,
-        date: new Date().toString(),
+        date: moment.utc().format(),
         amount: parsedAmount
       };
       const data = [item].concat(this.state.data);
 
       console.log('data', data)
 
-      this.setState({ data, totalAmount: total });
+      this.setState({ data, totalAmount: total, empty: false });
+      localStorage.setItem('walletData', JSON.stringify({ data, totalAmount: total }));
     },
     getInitialState() {
-      return { data: [], totalAmount: 15 };
+      return { data: [], totalAmount: 0 };
     },
     componentDidMount() {
+      const localData = localStorage.getItem('walletData');
 
+      if(localData){
+        this.setState(JSON.parse(localData));
+      }
     },
     render() {
 
@@ -224,6 +239,7 @@
         <div>
           <WalletMenu onReset={this.resetHistory}/>
           <AmountBox total={this.state.totalAmount}
+                     empty={this.state.empty}
                      onClickButton={this.handleAction}/>
           <HistoryList data={this.state.data} />
         </div>
