@@ -5,6 +5,9 @@
     FORMAT: 'MMMM Do YYYY, h:mm:ss a'
   };
 
+  /**
+   * Wallet menu
+   */
   const WalletMenu = React.createClass({
     handleReset(e){
       e.preventDefault();
@@ -48,6 +51,9 @@
     }
   });
 
+  /**
+   * Amount Box
+   */
   const AmountTotal = React.createClass({
     render() {
       const total = this.props.total;
@@ -64,10 +70,7 @@
     render(){
       const url = this.props.url;
 
-      return (
-        <img src={url}
-             className="center-block img-responsive"/>
-      );
+      return (<img src={url} className="center-block img-responsive"/>);
     }
   });
 
@@ -88,11 +91,11 @@
 
       this.props.onClickButton(amount, type);
 
-      this.setState({amount: ''});
+      this.setState({ amount: '' });
     },
     render() {
       const { amount, error } = this.state;
-      const empty = this.props.empty;
+      const enoughAmount = this.props.enoughAmount;
 
       return (
         <div className="btns col-md-offset-3 col-md-6">
@@ -104,12 +107,8 @@
                 placeholder="Amount"
                 value={amount}
                 onChange={this.handleAmountChange}/>
-              {
-                error && amount ? <ErrorBox url="src/css/error.jpg"/> : null
-              }
-              {
-                empty && !error && amount ? <ErrorBox url="src/css/empty.jpg"/> : null
-              }
+              { error && amount ? <ErrorBox url="src/css/error.jpg"/> : null }
+              { !enoughAmount && !error ? <ErrorBox url="src/css/empty.jpg"/> : null }
             </div>
 
             <button type="button"
@@ -132,21 +131,22 @@
 
   const AmountBox = React.createClass({
     render() {
-      const empty = this.props.empty;
-      const total = this.props.total;
-      const onClickButton = this.props.onClickButton;
+      const { enoughAmount, total, onClickButton } = this.props;
 
       return (
         <section className="promo section offset-header">
           <div className="container text-center">
             <AmountTotal total={total} />
-            <AmountForm onClickButton={onClickButton} empty={empty}/>
+            <AmountForm onClickButton={onClickButton} enoughAmount={enoughAmount}/>
           </div>
         </section>
       );
     }
   });
 
+  /**
+   * History Box
+   */
   const HistoryItem = React.createClass({
     getTrClass(type) {
       return `text-center text-${type === ACTION.ADD ? 'success' : 'danger'}`;
@@ -199,17 +199,18 @@
     }
   });
 
-
-
+  /**
+   * Wallet Box
+   */
   const WalletBox = React.createClass({
     resetHistory() {
-      this.setState({ data: [], totalAmount: 0, empty: false });
+      this.setState({ data: [], totalAmount: 0, enoughAmount: true });
     },
     handleAction(amount, type) {
       const parsedAmount = parseInt(amount);
       const total = this.state.totalAmount + (type === ACTION.ADD ? parsedAmount : parsedAmount * (-1));
 
-      if(total < 0) return this.setState({ empty: true });
+      if(total < 0) return this.setState({ enoughAmount: false });
 
       const item = {
         type,
@@ -218,11 +219,11 @@
       };
       const data = [item].concat(this.state.data);
 
-      this.setState({ data, totalAmount: total, empty: false });
+      this.setState({ data, totalAmount: total, enoughAmount: true });
       localStorage.setItem('walletData', JSON.stringify({ data, totalAmount: total }));
     },
     getInitialState() {
-      return { data: [], totalAmount: 0 };
+      return { data: [], totalAmount: 0,  enoughAmount: true };
     },
     componentDidMount() {
       const localData = localStorage.getItem('walletData');
@@ -237,7 +238,7 @@
         <div>
           <WalletMenu onReset={this.resetHistory}/>
           <AmountBox total={this.state.totalAmount}
-                     empty={this.state.empty}
+                     enoughAmount={this.state.enoughAmount}
                      onClickButton={this.handleAction}/>
           <HistoryList data={this.state.data} />
         </div>
