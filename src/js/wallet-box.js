@@ -11,8 +11,7 @@
 
       this.props.onReset();
     },
-    render(){
-
+    render() {
       return (
         <header className="header clearfix">
           <div className="container">
@@ -33,11 +32,13 @@
               </div>
               <div className="navbar-collapse collapse" id="navbar-collapse">
                 <ul className="nav navbar-nav">
-                  <li className="nav-item"><a href="#">Home</a></li>
+                  <li className="nav-item"><a href="/">Home</a></li>
                   <li className="nav-item">
                     <a href="#" onClick={this.handleReset}>Reset</a>
                   </li>
-                  <li className="nav-item"><a href="#">Source code</a></li>
+                  <li className="nav-item">
+                    <a target="blank" href="https://github.com/ssteffann/wallet">Source code</a>
+                  </li>
                 </ul>
               </div>
             </nav>
@@ -53,7 +54,7 @@
       return (
         <div>
           <h2 className="title">{total} <span className="highlight">$</span></h2>
-          <p className="intro">Disponible amount</p>
+          <p className="intro">Available amount</p>
         </div>
       );
     }
@@ -65,20 +66,20 @@
 
       return (
         <img src={url}
-             className="center-block img-rounded img-responsive"/>
+             className="center-block img-responsive"/>
       );
     }
   });
 
   const AmountForm = React.createClass({
     getInitialState() {
-      return { amount: '', error: false, empty: this.props.empty }
+      return { amount: '', error: false }
     },
     handleAmountChange(e) {
       const reg = /^\d+$/;
       const amount = e.target.value;
 
-      this.setState({ amount, error: !reg.test(amount), empty: false });
+      this.setState({ amount, error: !reg.test(amount) });
     },
     handleAction(type) {
       const { amount, error } = this.state;
@@ -87,10 +88,11 @@
 
       this.props.onClickButton(amount, type);
 
-      this.setState({author: ''});
+      this.setState({amount: ''});
     },
     render() {
-      const { amount, error, empty } = this.state;
+      const { amount, error } = this.state;
+      const empty = this.props.empty;
 
       return (
         <div className="btns col-md-offset-3 col-md-6">
@@ -201,9 +203,7 @@
 
   const WalletBox = React.createClass({
     resetHistory() {
-      console.log('reset')
       this.setState({ data: [], totalAmount: 0, empty: false });
-      localStorage.removeItem('walletData');
     },
     handleAction(amount, type) {
       const parsedAmount = parseInt(amount);
@@ -217,8 +217,6 @@
         amount: parsedAmount
       };
       const data = [item].concat(this.state.data);
-
-      console.log('data', data)
 
       this.setState({ data, totalAmount: total, empty: false });
       localStorage.setItem('walletData', JSON.stringify({ data, totalAmount: total }));

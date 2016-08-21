@@ -1,0 +1,10 @@
+{
+  "name": "simple_server",
+  "version": "0.0.1",
+  "license": "MIT",
+  "main": "server.js",
+  "dependencies": {
+    "body-parser": "^1.4.3",
+    "express": "^4.4.5"
+  }
+}
