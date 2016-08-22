@@ -23,6 +23,7 @@
                 <span className="logo-title">Wallet</span>
               </a>
             </h1>
+
             <nav id="main-nav" className="main-nav navbar-right" role="navigation">
               <div className="navbar-header">
                 <button className="navbar-toggle" type="button" data-toggle="collapse"
@@ -33,6 +34,7 @@
                   <span className="icon-bar"></span>
                 </button>
               </div>
+
               <div className="navbar-collapse collapse" id="navbar-collapse">
                 <ul className="nav navbar-nav">
                   <li className="nav-item"><a href="/">Home</a></li>
@@ -95,7 +97,6 @@
     },
     render() {
       const { amount, error } = this.state;
-      const enoughAmount = this.props.enoughAmount;
 
       return (
         <div className="btns col-md-offset-3 col-md-6">
@@ -108,7 +109,6 @@
                 value={amount}
                 onChange={this.handleAmountChange}/>
               { error && amount ? <ErrorBox url="src/css/error.jpg"/> : null }
-              { !enoughAmount && !error ? <ErrorBox url="src/css/empty.jpg"/> : null }
             </div>
 
             <button type="button"
@@ -117,6 +117,7 @@
                     disabled={error}>
               <i className="glyphicon glyphicon-log-in"></i> Add
             </button>
+
             <button type="button"
                     className="btn btn btn-cta-primary btn-lg btn-block"
                     onClick={() => this.handleAction(ACTION.REMOVE)}
@@ -131,13 +132,13 @@
 
   const AmountBox = React.createClass({
     render() {
-      const { enoughAmount, total, onClickButton } = this.props;
+      const { total, onClickButton } = this.props;
 
       return (
         <section className="promo section offset-header">
           <div className="container text-center">
             <AmountTotal total={total} />
-            <AmountForm onClickButton={onClickButton} enoughAmount={enoughAmount}/>
+            <AmountForm onClickButton={onClickButton}/>
           </div>
         </section>
       );
@@ -163,7 +164,9 @@
           <td>
             <i className={this.getIconClass(type)}></i>
           </td>
+
           <td><strong>{date}</strong></td>
+
           <td className="text-right"><strong>{amount} $</strong></td>
         </tr>
       );
@@ -186,15 +189,54 @@
           <div className="container">
             <table className="table table-hover table-responsive">
               <tbody>
-              <tr className="highlight">
-                <th className="text-center">Action:</th>
-                <th className="text-center">Date:</th>
-                <th className="text-right">Amount:</th></tr>
-              {historyItems}
+                <tr className="highlight">
+                  <th className="text-center">Action:</th>
+                  <th className="text-center">Date:</th>
+                  <th className="text-right">Amount:</th>
+                </tr>
+                {historyItems}
               </tbody>
             </table>
           </div>
         </section>
+      );
+    }
+  });
+
+  const Modal = React.createClass({
+    render() {
+      return (
+          <div className="modal fade"
+               id="warningModal"
+               tabIndex="-1"
+               role="dialog"
+               aria-labelledby="modalLabel">
+            <div className="modal-dialog" role="document">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <button type="button"
+                          className="close"
+                          data-dismiss="modal"
+                          aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+
+                  <h4 className="modal-title"
+                      id="modalLabel">Ooops</h4>
+                </div>
+
+                <div className="modal-body">
+                  <ErrorBox url="src/css/empty.jpg"/>
+                </div>
+
+                <div className="modal-footer">
+                  <button type="button"
+                          className="btn btn-default"
+                          data-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
       );
     }
   });
@@ -204,13 +246,16 @@
    */
   const WalletBox = React.createClass({
     resetHistory() {
-      this.setState({ data: [], totalAmount: 0, enoughAmount: true });
+      this.setState({ data: [], totalAmount: 0 });
+    },
+    openWarningModal(options = {}) {
+      return $('#warningModal').modal(options)
     },
     handleAction(amount, type) {
       const parsedAmount = parseInt(amount);
       const total = this.state.totalAmount + (type === ACTION.ADD ? parsedAmount : parsedAmount * (-1));
 
-      if(total < 0) return this.setState({ enoughAmount: false });
+      if(total < 0) return this.openWarningModal();
 
       const item = {
         type,
@@ -219,11 +264,11 @@
       };
       const data = [item].concat(this.state.data);
 
-      this.setState({ data, totalAmount: total, enoughAmount: true });
+      this.setState({ data, totalAmount: total });
       localStorage.setItem('walletData', JSON.stringify({ data, totalAmount: total }));
     },
     getInitialState() {
-      return { data: [], totalAmount: 0,  enoughAmount: true };
+      return { data: [], totalAmount: 0 };
     },
     componentDidMount() {
       const localData = localStorage.getItem('walletData');
@@ -238,9 +283,9 @@
         <div>
           <WalletMenu onReset={this.resetHistory}/>
           <AmountBox total={this.state.totalAmount}
-                     enoughAmount={this.state.enoughAmount}
                      onClickButton={this.handleAction}/>
           <HistoryList data={this.state.data} />
+          <Modal/>
         </div>
       );
     }
